@@ -1,0 +1,222 @@
+---
+title: "Variational Approximation"
+subtitle: "Or Being a Bayesian in a world with too much data"
+author: "Jacob Carey"
+date: \today
+output: 
+  beamer_presentation:
+    toc: true
+    theme: "Szeged"
+    slide_level: 2
+    fig_caption: no
+    includes:
+      in_header: styles.sty
+---
+
+# Motivation
+
+##
+
+\begin{center}
+\includegraphics{first_data}
+\end{center}
+
+##
+
+\begin{center}
+\includegraphics{second_data}
+\end{center}
+
+## Bayesians vs Frequentists
+
+>- Frequentist methods are typically faster than their Bayesian counterparts (e.g. logistic regression)
+>- Computationally - why is this?
+>- Frequentist MLEs are typically solved using (fast) optimization
+>- Bayesian posteriors are typically approximated using (slow) integration
+
+## Speeding up integration
+
+- Alternatives to the Gibbs/MH samplers
+- Examples
+    - Hamiltonian and extensions
+    - Collapsed Gibbs Sampling
+    - Others
+- Still slow in comparison
+
+## Expectation Maximization
+
+- EM is another optimization based inference method
+- Can be used as another "fast" alternative
+- However, does not provide a full bayesian solution i.e. only a point estimate with approximated uncertainty intervals, not a distribution
+  
+# Theory of Variational Approximation
+
+## Approximate the posterior using optimization
+
+- Idea: find a density $q^{*}(z)$ such that
+
+$$q^{*}(z) = \argmin_{q(z)} H\big(q(z)||p(z|x)\big)$$
+
+- $H$ is some "distance" between a density $q(z)$ and the true posterior $p(z|x)$.
+
+- Typical distance used is the *Kullback-Leibler Divergence*
+
+$$\text{KL}\big(q(z)||p(z|x)\big) = {\color{blue}\int q(z)\log \left\{\frac{q(z)}{p(z|x)}\right\}dz}$$
+
+- $\text{D}_\text{KL}$ is *asymmetric*, greater than or equal to 0 for all densities $q$ and equal iff $q(z) = p(z|x)$ almost everywhere.
+
+
+## Derivation
+
+$$
+\begin{aligned}
+\log p(x) &= \int q(z) \log p(x) dz \\
+&= \int q(z) \log \left\{\frac{p(z, x) / q(z)}{p(z|x)/q(z)}\right\} dz\\
+&= {\color{orange}\int q(z) \log \left\{\frac{p(z, x)}{q(z)}\right\}dz} +
+{\color{blue} \int q(z) \log \left\{\frac{q(z)}{p(z|x)}\right\}dz} \\
+&\geq {\color{orange}\int q(z) \log \left\{\frac{p(z, x)}{q(z)}\right\}dz}
+\end{aligned}
+$$
+
+## ELBO
+
+- We call ${\color{orange}\int q(z) \log \left\{\frac{p(z, x)}{q(z)}\right\}=\E[\log p(z, x)] - \E[\log q(z)]}$ the *evidence lower bound* or *ELBO*.
+
+- From the derivation in the previous slide, it is apparent that maximizing the ELBO is equivalent to minimizing the $\text{D}_\text{KL}$ between $q(z)$ and the posterior.
+
+## Variational Approximation
+
+- Finding the density $q(z)$ which maximizes the ELBO is called *Variational Approximation*.
+
+- Typically, we limit the candidate densities $q(z)$ to a family $\mathscr{Q}$ to make this optimization more analytically tractable. 
+
+- The common assumption made is that $q(z)$ factorizes into $\prod_{i=1}^Mq_i(z_i)$ for some partition of $z$.
+
+- This assumption is called the *mean field approximation*.
+
+- Using Lagrange multipliers (in conjuction with the independence assumption), we can derive an algorithm
+
+## Coordinate Ascent Variational Inference
+
+>- The derived algorithm - CAVI - is as follows
+
+>- Iterate over each variable/partition
+
+>- Update $j$-th variational density as follows
+
+>- $q^{*}(z_j) \propto \exp \left\{\E_{-j}\left[\log p(z_j, z_{-j}, x)\right]\right\}$
+
+>- Stop when the change in the ELBO is "negligible"
+
+## Pros
+
+- Fast: some complicated models (even on small-moderate data) may converge prohibitively slowly with MCMC. MCMC does not perform well on large data
+- Convergence is much easier to diagnose than MCMC
+
+## Cons
+
+- Traditional VA underestimates the posterior variance (i.e. overestimates our "confidence" in the posterior point estimate)
+- Only guaranteed to find a local optimum
+- Much more difficult to derive updates than for many MCMC methods
+- Independence assumption may not be a good one in the case of MFA
+
+## Comparison
+
+![Blei et al 2016](comparison.png)
+
+Gaussian mixture models fit to ten thousand images
+
+Blei et al 2016
+
+# Examples 
+
+## Normal with conjugate priors
+
+Model: $$X_i | \mu, \tau \sim \text{Normal}(\mu, \tau)$$
+
+Priors: $$\mu \sim \text{Normal}(\mu_0, \tau_\mu)$$
+$$\tau \sim \text{Gamma}(A_0, B_0)$$
+
+Variational Densities: $$q(\tau;A_1, B_1)$$
+$$q(\mu;m, s^2)$$
+
+## Update for Precision
+
+$$
+\begin{aligned}
+q_{\tau}^{*}(\tau) &\propto \exp\E[\log p(\mu) + \log p (\tau) + \log \prod p(x_i|\mu, \tau); m, s^2] \\
+&\propto \exp\{(A_0-1)\log \tau - B_0 \tau + \\ &\phantom{=} \sum \E[\frac{1}{2}\log \tau - \tau(x_i - \mu)^2/2;m, s^2]\} \\
+&\propto \exp\{(A_0 + \frac{n}{2}-1)\log \tau - B_0 \tau + \\ &\phantom{=} \sum \E[-\tau( x_i^2 - 2\mu x_i +\mu^2)/2; m, s^2]\} \\
+&\propto \exp\{(A_0 + \frac{n}{2}-1)\log \tau - B_0 \tau +\\ &\phantom{=} \sum (-\tau x_i^2/2 - \tau m x_i + \tau (m^2 + s^2)/2))\} \\
+&\implies A_1 = A_0 + \frac{n}{2}; B_1 = B_0 + \frac{1}{2}\sum x_i^2 - n\bar{x}m + \frac{n}{2}(s^2 + m^2)
+\end{aligned}
+$$
+
+## Update for Mean
+
+$$
+\begin{aligned}
+q_\mu^*(\mu) &\propto \exp\{\E \log p(\mu) + \sum \E[\log p(x_i|\mu, \tau); A_1, B_1]\} \\
+&= \exp\{\frac{1}{2}\log \tau_\mu - \frac{\tau_\mu}{2}(\mu-\mu_\mu)^2 + \\ &\phantom{=} \sum \E[\frac{1}{2}\log \tau - \frac{\tau}{2}(x_i-\mu)^2;A_1, B_1]\} \\
+&\propto \exp \{(\mu^2 - 2\mu\mu_\mu)\tau_\mu/2 + \sum\E[-(\mu^2-2\mu x_i)\frac{\tau}{2};A_1, B_1]\} \\
+&= \exp\{-\frac{1}{2}\tau_\mu\mu^2+\tau_\mu\mu_\mu\mu+\sum(-\frac{A}{2B}\mu^2 + \frac{A}{B}\mu x_i)\} \\
+&= \exp\{-\frac{1}{2}((n\frac{A}{B}+\tau_\mu)\mu^2-2(n\bar{x}\frac{A}{B}+\tau_\mu\mu_\mu)\mu)\} \\
+&\implies m=\frac{n\bar{x}\frac{A}{B}+\tau_mu\mu_\mu}{n\frac{A}{B}+\tau_\mu}; s^2=\frac{1}{n\frac{A}{B}+\tau_\mu}
+\end{aligned}
+$$
+
+## ELBO
+
+$$
+\begin{aligned}
+\text{ELBO}(m, s^2, A_1, B_1) &= \E[\log p(\mu, \tau, x_1, ..., x_n)] - \E[\log q(\mu, \tau)] \\
+&= \E[\log p(\mu)]+\E[\log p(\tau)] + \\
+&\phantom{=} \sum \E[\log p (x_i|\mu, \tau)] - \\
+&\phantom{=} \E[\log  q(\mu)] - \E[\log q(\tau)]
+\end{aligned}
+$$
+
+## ELBO (Cont)
+
+$$
+\begin{aligned}
+\E[\log p(\mu)] &= \E[\frac{1}{2}\log\frac{\tau_\mu}{2\pi}-\frac{\tau}{2}(\mu^2-2\mu\mu_\mu+\mu_\mu^2)] \\
+&= \frac{1}{2}\log\frac{\tau_\mu}{2\pi}-\frac{\tau}{2}((m^2 + s^2)-2m\mu_\mu+\mu_\mu^2)] \\
+\E[\log q(\mu)] &= \E[-\frac{1}{2}\log 2s^2\pi-\frac{1}{2s^2}(\mu^2-2\mu m+m^2)] \\
+&= -\frac{1}{2}\log 2s^2\pi-\frac{1}{2s^2}((m^2 + s^2)-2m^2+m^2) \\
+&= -\frac{1}{2} - \frac{1}{2}\log 2s^2\pi
+\end{aligned}
+$$
+
+## ELBO (Cont)
+
+$$
+\begin{aligned}
+\log p(x_i|\mu, \tau) &= \frac{1}{2}\log \frac{\tau}{2\pi} -\frac{\tau}{2}(x_i^2 - 2x_i\mu + \mu^2) \\
+\E[\log p(x_i | \mu, \tau)] &= \E[\frac{1}{2}\log \frac{\tau}{2\pi} -\frac{\tau}{2}x_i^2 - \tau x_i\mu + \frac{\tau}{2}\mu^2] \\
+&= \frac{1}{2}\E[\log \tau] - \frac{1}{2} \log 2 \pi - \frac{A_1}{2B_1}(x_i^2 - 2 x_im _ m^2 + s^2) \\
+\\
+\text{ELBO}(m, s^2, A_1, B_1) &= \frac{1}{2} - \frac{n}{2}\log 2\pi + \frac{1}{2} \log s^2 \tau_\mu - \\
+&\phantom{=} \frac{\tau_\mu}{2}(s^2 + m^2 - 2m\mu_\mu+\mu_\mu^2)
+\end{aligned}
+$$
+
+# Black Box Variational Inference
+
+## Foundation
+
+- Gradient Descent
+- Automatic Differentiation
+
+## Gradient Descent
+
+- Method of minimizing a function
+- $\theta_{n+1} = \theta_{n} + \eta_n \nabla_{\theta} J(\theta)$
+- $\eta$ called the learning rate and a topic of research in its own right
+- Typically, iterate until $D(\theta_{n+1}, \theta_n)<\epsilon)$
+
+## Automatic Differentation
+
+- Software based method for taking gradient
+
+## Questions?
