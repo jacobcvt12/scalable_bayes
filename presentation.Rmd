@@ -94,20 +94,6 @@ $$
 
 - This assumption is called the *mean field approximation*.
 
-- Using Lagrange multipliers (in conjuction with the independence assumption), we can derive an algorithm
-
-## Coordinate Ascent Variational Inference
-
->- The derived algorithm - CAVI - is as follows
-
->- Iterate over each variable/partition
-
->- Update $j$-th variational density as follows
-
->- $q^{*}(z_j) \propto \exp \left\{\E_{-j}\left[\log p(z_j, z_{-j}, x)\right]\right\}$
-
->- Stop when the change in the ELBO is "negligible"
-
 ## Pros
 
 - Fast: some complicated models (even on small-moderate data) may converge prohibitively slowly with MCMC. MCMC does not perform well on large data
@@ -128,7 +114,19 @@ Gaussian mixture models fit to ten thousand images
 
 Blei et al 2016
 
-# Examples 
+# Coordinate Ascent Variational Inference
+
+## Algorithm
+
+>- The derived algorithm - CAVI - is as follows
+
+>- Iterate over each variable/partition
+
+>- Update $j$-th variational density as follows
+
+>- $q^{*}(z_j) \propto \exp \left\{\E_{-j}\left[\log p(z_j, z_{-j}, x)\right]\right\}$
+
+>- Stop when the change in the ELBO is "negligible"
 
 ## Normal with conjugate priors
 
