@@ -210,12 +210,28 @@ $$
 ## Gradient Descent
 
 - Method of minimizing a function
-- $\theta_{n+1} = \theta_{n} + \eta_n \nabla_{\theta} J(\theta)$
+- $\theta_{n+1} = \theta_{n} + \eta_n \nabla_{\theta} J(\theta_n)$
 - $\eta$ called the learning rate and a topic of research in its own right
 - Typically, iterate until $D(\theta_{n+1}, \theta_n)<\epsilon)$
 - Under some non-strict assumptions, local minima guaranteed at convergence
 - Under stricter assumptions, global minimum guaranteed
 - Only requires knowledge of the first order derivatives!
+
+## Gradient Descent
+
+```{r graddesc}
+f <- function(x) x^2
+df <- function(x) 2 * x
+x <- c(1.0, 2.0) # c(current, new)
+eps <- 0.00001; eta <- 0.01
+
+while (abs(x[2] - x[1]) > eps) {
+    x[1] = x[2] # update current value
+    x[2] = x[1] - eta * df(x[1]) # update new value
+}
+
+print(x[2])
+```
 
 ## Automatic Differentation
 
