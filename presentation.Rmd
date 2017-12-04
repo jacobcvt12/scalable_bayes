@@ -242,8 +242,7 @@ ggplot(d, aes(x, y)) +
     geom_line() + 
     geom_hline(yintercept=1, linetype=2, colour="grey") +
     labs(x="Number of samples",
-         y="E[X^2], X ~ Normal(0, 1)",
-         title="Accuracy of Monte Carlo Approximation")
+         y="E[X^2], X ~ Normal(0, 1)")
 ```
 
 ## Questions?
