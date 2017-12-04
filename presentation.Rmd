@@ -207,6 +207,7 @@ $$
 
 - Gradient Descent
 - Automatic Differentiation
+- Monte Carlo approximation of Expected Values
 
 ## Gradient Descent
 
@@ -214,9 +215,37 @@ $$
 - $\theta_{n+1} = \theta_{n} + \eta_n \nabla_{\theta} J(\theta)$
 - $\eta$ called the learning rate and a topic of research in its own right
 - Typically, iterate until $D(\theta_{n+1}, \theta_n)<\epsilon)$
+- Under some non-strict assumptions, local minima guaranteed at convergence
+- Under stricter assumptions, global minimum guaranteed
+- Only requires knowledge of the first order derivatives!
 
 ## Automatic Differentation
 
 - Software based method for taking gradient
+- Allows for an accurate, quick method of derivative calculation
+    - Only requires a function and the value that derivative should be calculated at
+
+## Monte Carlo approximation of Expected Values
+
+- For a random variable $X \sim F$, we can approximate $E[f(X)]$
+- Sample $X_1, ..., X_n$ from F 
+- $E[f(x)] \approx \frac{1}{n} \sum_i f(X_i)$
+- Accuracy of approximation increases as n (number of samples) increases
+
+## Accuracy of Monte Carlo approximation
+
+```{r accuracy, echo=FALSE, warning=FALSE}
+n <- 1000
+x <- rnorm(n)
+f_x <- cumsum(x^2) / (1:n)
+library(ggplot2)
+d <- data.frame(y=f_x, x=1:n)
+ggplot(d, aes(x, y)) +
+    geom_line() + 
+    geom_hline(yintercept=1, linetype=2, colour="grey") +
+    labs(x="Number of samples",
+         y="E[X^2], X ~ Normal(0, 1)",
+         title="Accuracy of Monte Carlo Approximation")
+```
 
 ## Questions?
