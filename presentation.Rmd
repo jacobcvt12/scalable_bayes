@@ -309,6 +309,14 @@ ggplot(d, aes(x, y)) +
 
 - See Julia code
 
+## Implementations
+
+- Stan
+
+- Edward/Tensorflow
+
+- PyMC3
+
 ## tl;dl
 
 >- MCMC fits exactly, takes forever
