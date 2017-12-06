@@ -294,6 +294,21 @@ ggplot(d, aes(x, y)) +
 
 >- Perform gradient ascent update and repeat $\phi_{i+1} = \phi_i + \eta \nabla_{\phi} \mathcal{L}(\phi_i, X)$
 
+## Further Considerations
+
+- Not all gradient estimators created equal
+    - Some can only be used with a few variational densities
+    - Some are more general but have higher variance
+
+- Recent research has investigated more flexible variational densities
+    - This research allows for a better fit than mean field VI
+    
+- Some algorithms allow for data sub-sampling
+
+## Interactive logistic regression experiment
+
+- See Julia code
+
 ## tl;dl
 
 >- MCMC fits exactly, takes forever
