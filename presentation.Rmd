@@ -94,6 +94,24 @@ $$
 
 - This assumption is called the *mean field approximation*.
 
+## Notes about Variational Densities
+
+>- We parameterize the densities $q_i$ in terms of $\phi_i$
+
+>- Example: for some parameter $z_i$, we approximate $p(z_i|x) \approx q(z_i|\phi_i)$
+
+>- $X_1, ..., X_n \sim \text{Normal}(\mu, \sigma^2)$ with $\mu \sim \text{Normal}(0, 1)$ and $\sigma^2$ known
+
+>- Find $\phi_1, \phi_2$ where $q(\mu|\phi_1, \phi_2)=\text{Normal}(\phi_1, \phi_2)$ which maximizes ELBO, implicitly $q(\mu|\phi_1, \phi_2) \approx p(\mu|X_1, ..., X_n)$
+
+## Choice of Variational Densities
+
+- Generally, the choice of the variational density is the same as the prior
+
+- Exceptions: if prior is a "simple" distribution, use generalization
+
+- More exceptions: some algorithms/implementations only allow for a small number of variational densities
+
 ## Pros
 
 - Fast: some complicated models (even on small-moderate data) may converge prohibitively slowly with MCMC. MCMC does not perform well on large data
@@ -103,16 +121,7 @@ $$
 
 - Traditional VA underestimates the posterior variance (i.e. overestimates our "confidence" in the posterior point estimate)
 - Only guaranteed to find a local optimum
-- Much more difficult to derive updates than for many MCMC methods
 - Independence assumption may not be a good one in the case of MFA
-
-## Comparison
-
-![Blei et al 2016](comparison.png)
-
-Gaussian mixture models fit to ten thousand images
-
-Blei et al 2016
 
 # Coordinate Ascent Variational Inference
 
@@ -201,7 +210,7 @@ $$
 
 # Black Box Variational Inference
 
-## Foundation
+## Necessary Tools
 
 - Gradient Descent
 - Automatic Differentiation
@@ -210,10 +219,10 @@ $$
 ## Gradient Descent
 
 - Method of minimizing a function
-- $\theta_{n+1} = \theta_{n} + \eta_n \nabla_{\theta} J(\theta_n)$
+- $\theta_{n+1} = \theta_{n} - \eta_n \nabla_{\theta} J(\theta_n)$
 - $\eta$ called the learning rate and a topic of research in its own right
 - Typically, iterate until $D(\theta_{n+1}, \theta_n)<\epsilon)$
-- Under some non-strict assumptions, local minima guaranteed at convergence
+- Under some reasonable assumptions, local minima guaranteed at convergence
 - Under stricter assumptions, global minimum guaranteed
 - Only requires knowledge of the first order derivatives!
 
@@ -241,9 +250,9 @@ print(x[2])
 
 ## Monte Carlo approximation of Expected Values
 
-- For a random variable $X \sim F$, we can approximate $E[f(X)]$
+- For a random variable $X \sim F$, we can approximate $\E[f(X)]$
 - Sample $X_1, ..., X_n$ from F 
-- $E[f(x)] \approx \frac{1}{n} \sum_i f(X_i)$
+- $\E[f(x)] \approx \frac{1}{n} \sum_i f(X_i)$
 - Accuracy of approximation increases as n (number of samples) increases
 
 ## Accuracy of Monte Carlo approximation
@@ -260,5 +269,34 @@ ggplot(d, aes(x, y)) +
     labs(x="Number of samples",
          y="E[X^2], X ~ Normal(0, 1)")
 ```
+
+## Putting it All Together
+
+>- For any model $p(z, x)$ regardless of conjugacy of priors $p(z)$ to likelihood $p(z, x)$, we would like to approximate the posterior with variational inference
+
+>- This requires maximizing the ELBO - $\E[\log p(z, x)] - \E[\log q(z|\phi)]=\mathcal{L}(\phi, X)$
+
+>- Gradient descent: iterate over ELBO to find maxima
+
+>- Automatic Differentiation and Monte Carlo: Calculate estimates of the gradient of ELBO
+
+## General Algorithm
+
+>- Specify priors $p(z)$, likelihood $p(x|z)$, and variational densities $q(z|\phi_i)$
+
+>- Generate $L$ samples from variational density $z_1, ..., z_L \sim q(z|\phi_i)$
+
+>- With these samples, calculate log prior, log likelihood, and log variational density ($\log q(z_l|\phi_i)$)
+
+>- Calculate log joint density ($\log p(x, z_i) = \log p(x | z_i) + \log p(z_i)$)
+
+>- Estimate ELBO $\mathcal{L}(\phi_i, X) \approx \frac{1}{L}\sum_l \log p(x, z_l) - \log q(z_l|\phi_i)$ 
+
+>- Perform gradient ascent update and repeat $\phi_{i+1} = \phi_i + \eta \nabla_{\phi} \mathcal{L}(\phi_i, X)$
+
+## tl;dl
+
+>- MCMC fits exactly, takes forever
+>- VI fits approximately, takes "reasonable" amount of time
 
 ## Questions?
