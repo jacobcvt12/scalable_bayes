@@ -48,6 +48,12 @@ output:
 - EM is another optimization based inference method
 - Can be used as another "fast" alternative
 - However, does not provide a full bayesian solution i.e. only a point estimate with approximated uncertainty intervals, not a distribution
+
+## Variational Inference
+
+>- Fast, optimization based inference
+>- Much faster than MCMC in most situations
+>- Providers a full posterior approximation
   
 # Theory of Variational Approximation
 
