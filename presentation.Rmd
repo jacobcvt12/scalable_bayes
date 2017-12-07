@@ -1,5 +1,5 @@
 ---
-title: "Variational Approximation"
+title: "Introduction to Variational Inference"
 subtitle: "Or Being a Bayesian in a world with too much data"
 author: "Jacob Carey"
 date: \today
