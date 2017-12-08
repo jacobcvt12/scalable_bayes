@@ -254,6 +254,15 @@ print(x[2])
 - Allows for an accurate, quick method of derivative calculation
     - Only requires a function and the value that derivative should be calculated at
 
+## Automatic Differentiation
+
+```{r ad, eval=FALSE}
+f <- function(x) x^2
+auto.diff(f, 3)
+
+## 6
+```
+
 ## Monte Carlo approximation of Expected Values
 
 - For a random variable $X \sim F$, we can approximate $\E[f(X)]$
