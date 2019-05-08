@@ -2,15 +2,17 @@
 using Distributions, ForwardDiff
 using StatsFuns
 using GradDescent
+using Random
+using LinearAlgebra
 
 # data size
 N = 10000  # number of observations
 D = 20     # number of covariates including intercept
 
 # generate data
-srand(1)                  # insure reproducibility
+Random.seed!(1)           # insure reproducibility
 X = rand(Normal(), N, D)  # generate covariates
-X[:, 1] = 1               # make first column intercept
+X[:, 1] = ones(N)         # make first column intercept
 b = rand(Normal(), D)     # coefficients
 θ = logistic.(X * b)      # simulate dependent variables
 y = rand.(Bernoulli.(θ))  # simulate dependent variables
@@ -32,9 +34,8 @@ function ℒ(y, X, prior, μ, σ)
     θ_z = logistic.(X * z)
     log_lik = sum(logpdf.(Bernoulli.(θ_z), y))
 
-
     # calculate log joint density
-    log_joint = log_prior + log_lik
+    log_joint = log_prior .+ log_lik
 
     # calculate log variational density 
     # (often referred to as entropy)
@@ -197,13 +198,12 @@ end
 # fit multiple VI models and compare
 fits = 3
 
-srand(428)
+Random.seed!(428)
 
 λ = zeros(D, 2, fits)
 elbo = zeros(fits)
 
-tic()
-for fit in 1:fits
+@time for fit in 1:fits
     # prior on coefficents
     prior = Normal(0.0, 1.0)
 
@@ -213,28 +213,25 @@ for fit in 1:fits
     # fit model 
     λ[:, :, fit], elbo[fit] = svi(y, X, prior, opt)
 end
-toc()
 
 # model with highest ELBO should be selected
 best = findmax(elbo)[2]
 λ = λ[:, :, best]
 
 # now fit MH model
-tic()
-θ = mh(y, X, Normal(), delta=0.15, info=100)
-toc()
-
-using Gadfly, DataFrames
+@time θ = mh(y, X, Normal(), delta=0.15, info=100);
 
 lb = quantile.(Normal.(λ[:, 1], softplus.(λ[:, 2])), 0.025)
 ub = quantile.(Normal.(λ[:, 1], softplus.(λ[:, 2])), 0.975)
 
+using DataFrames, CSV
+
 results = DataFrame(variable=1:D,
                     truth=b,
                     vi=λ[:, 1],
-                    mh=mean(θ[1001:2000, :], [1])[1, :],
+                    mh=mean(θ[1001:2000, :], dims=1)[1, :],
                     lb=lb,
                     ub=ub)
-results = stack(results, [:truth, :vi, :mh])
+results = stack(results, [:truth, :vi, :mh], variable_name=:covariate)
+CSV.write("results.csv", results)
 
-plot(results, x=:variable_1, y=:value, ymin=:lb, ymax=:ub, color=:variable, Geom.point, Geom.errorbar)
