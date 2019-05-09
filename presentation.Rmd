@@ -1,6 +1,6 @@
 ---
-title: "Introduction to Variational Inference"
-subtitle: "Or Being a Bayesian in a world with too much data"
+title: "Scalable Bayesian Methods"
+subtitle: "Posterior Approximation in high dimension with large datasets"
 author: "Jacob Carey"
 date: \today
 output: 
@@ -17,15 +17,16 @@ output:
 
 ##
 
-\begin{center}
-\includegraphics{first_data}
-\end{center}
+>- Your model takes too long to converge
+>- You're impatient
+>- Your model takes too long to converge
 
-##
+## Computational Complexity
 
-\begin{center}
-\includegraphics{second_data}
-\end{center}
+- Iterations per parameter and per observation
+- Also important, but not necessarily part of the computational complexity: number of total iterations
+- Number of total iterations tends to increase the more parameters a model has, especially using Gibbs and MH
+- Joint density (likelihood $\times$ prior) evaluations are fixed at number of parameters $m$ $\times$ number of observations $n$
 
 ## Bayesians vs Frequentists
 
@@ -45,8 +46,8 @@ output:
 
 ## Expectation Maximization
 
-- EM is another optimization based inference method
-- Can be used as another "fast" alternative
+- EM is a optimization based inference method
+- Can be used as a "fast" alternative
 - However, does not provide a full bayesian solution i.e. only a point estimate with approximated uncertainty intervals, not a distribution
 
 ## Variational Inference
@@ -55,7 +56,7 @@ output:
 >- Much faster than MCMC in most situations
 >- Providers a full posterior approximation
   
-# Theory of Variational Approximation
+# Theory
 
 ## Approximate the posterior using optimization
 
@@ -100,6 +101,8 @@ $$
 
 - This assumption is called the *mean field approximation*.
 
+- Using Lagrange multipliers (in conjuction with the independence assumption), we can derive an algorithm
+
 ## Notes about Variational Densities
 
 >- We parameterize the densities $q_i$ in terms of $\phi_i$
@@ -129,7 +132,15 @@ $$
 - Only guaranteed to find a local optimum
 - Independence assumption may not be a good one in the case of MFA
 
-# Coordinate Ascent Variational Inference
+## Comparison
+
+![Blei et al 2016](comparison.png)
+
+Gaussian mixture models fit to ten thousand images
+
+Blei et al 2016
+
+# CAVI
 
 ## Algorithm
 
@@ -147,7 +158,7 @@ $$
 
 Model: $$X_i | \mu, \tau \sim \text{Normal}(\mu, \tau)$$
 
-Priors: $$\mu \sim \text{Normal}(\mu_0, \tau_\mu)$$
+Priors: $$\mu \sim \text{Normal}(\mu_\mu, \tau_\mu)$$
 $$\tau \sim \text{Gamma}(A_0, B_0)$$
 
 Variational Densities: $$q(\tau;A_1, B_1)$$
@@ -214,7 +225,7 @@ $$
 \end{aligned}
 $$
 
-# Black Box Variational Inference
+# BBVI
 
 ## Necessary Tools
 
@@ -324,6 +335,24 @@ ggplot(d, aes(x, y)) +
 
 - See Julia code
 
+## Results
+
+```{r results, echo=FALSE, warning=FALSE, message=FALSE}
+library(readr)
+library(ggplot2)
+
+results <- read_csv("results.csv")
+
+ggplot(results, aes(variable, value)) + 
+    geom_point(aes(colour=covariate, shape=covariate)) + 
+    geom_linerange(aes(ymin=lb, ymax=ub), linetype=2, color="black") +
+    labs(x="Covariate",
+         y="Value",
+         title="Comparison of M-H and Variational Inference",
+         colour="Method",
+         shape="Method")
+```
+
 ## Implementations
 
 - Stan
@@ -331,6 +360,21 @@ ggplot(d, aes(x, y)) +
 - Edward/Tensorflow
 
 - PyMC3
+
+# Other Thoughts
+
+## Recent work
+
+>- Stochastic Variational Inference
+>- Black Box Variational Inference
+>- Boosting Variational Inference
+
+## Future work
+
+>- Optimize with respect to other divergences
+>- Improve optimizations while retaining effiencies
+>- Combining MCMC and VA/when to use one or the other
+>- Statistical properties of VA
 
 ## tl;dl
 
